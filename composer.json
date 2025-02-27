@@ -1,0 +1,21 @@
+{
+  "name": "yourname/zoho-bigquery",
+  "description": "PHP Cloud Function with Composer Dependencies",
+  "require": {
+        "google/cloud-functions-framework": "^1.0",
+        "google/cloud-bigquery": "^1.25",
+        "vlucas/phpdotenv": "^5.5"
+    },
+    "autoload": {
+        "psr-4": {
+            "App\\": "src/"
+        }
+    },
+    "scripts": {
+        "start": "php -S localhost:8080 -t public"
+    },
+    "config": {
+        "optimize-autoloader": true
+    },
+    "minimum-stability": "stable"
+}
