@@ -1,6 +1,3 @@
-Here’s the revised README reflecting the updated Cloud Function, which now uses IP address verification instead of Zoho webhook authentication:
-
-```markdown
 # Webhook to BigQuery Cloud Function
 
 This is a Google Cloud Function that processes incoming webhooks, validates the request by IP address, and stores the data into Google BigQuery.
