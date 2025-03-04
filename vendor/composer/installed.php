@@ -3,7 +3,7 @@
         'name' => 'yourname/zoho-bigquery',
         'pretty_version' => 'dev-master',
         'version' => 'dev-master',
-        'reference' => 'cae4a97d5e3a2b93661168a3e13fbbcf656c3f76',
+        'reference' => '785eb34cba21d6eb2c2563177c19bab877c18102',
         'type' => 'library',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
@@ -340,7 +340,7 @@
         'yourname/zoho-bigquery' => array(
             'pretty_version' => 'dev-master',
             'version' => 'dev-master',
-            'reference' => 'cae4a97d5e3a2b93661168a3e13fbbcf656c3f76',
+            'reference' => '785eb34cba21d6eb2c2563177c19bab877c18102',
             'type' => 'library',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),

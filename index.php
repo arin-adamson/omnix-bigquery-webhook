@@ -9,15 +9,33 @@ use Psr\Http\Message\ServerRequestInterface;
 /**
  * Register the Cloud Function for handling Zoho Webhooks
  */
-FunctionsFramework::http('myFunction', function (ServerRequestInterface $request) { // Function name must match the function name in the Cloud Function
-    // Load allowed IP from environment variable
-    $allowedIp = getenv('ALLOWED_IP'); // Set this in your Cloud Function environment variables
+FunctionsFramework::http('omnixBigQueryWebhook', function (ServerRequestInterface $request) { // Function name must match the function name in the Cloud Function
+    // Load allowed token from environment variable
+    $allowedToken = getenv('ALLOWED_TOKEN'); // Set this in your Cloud Function environment variables as "E02Gp2hKxDcZi1mJcR7kZOBJioCYqGgF"
 
     // Ensure the environment variable is set
-    if (!$allowedIp) {
+    if (!$allowedToken) {
         http_response_code(500);
-        error_log("Missing ALLOWED_IP environment variable");
-        return json_encode(["error" => "Missing ALLOWED_IP environment variable"]);
+        error_log("Missing ALLOWED_TOKEN environment variable");
+        return json_encode(["error" => "Missing ALLOWED_TOKEN environment variable"]);
+    }
+
+    // Get headers
+    $headers = $request->getHeaders();
+
+    // Extract Authorization header
+    $authHeader = isset($headers['Authorization'][0]) ? $headers['Authorization'][0] : null;
+    $receivedToken = null;
+    
+    if ($authHeader && preg_match('/Token\s+(.+)/', $authHeader, $matches)) {
+        $receivedToken = $matches[1];
+    }
+
+    // Check if the token matches the allowed token
+    if ($receivedToken !== $allowedToken) {
+        http_response_code(403);
+        error_log("Unauthorized token: " . ($receivedToken ?: 'none provided'));
+        return json_encode(["error" => "Request with unauthorized or missing token"]);
     }
 
     // Get raw POST data and headers
@@ -47,7 +65,15 @@ FunctionsFramework::http('myFunction', function (ServerRequestInterface $request
     }
 
     // Prepare data for BigQuery
-    $bigquery_data = []; // Insert your field mapping here
+    $bigquery_data = [
+        'oxLocationId' => getIfIsset($data, 'oxLocationId'),
+        'date' => getIfIsset($data, 'date'),
+        'licensePlate' => getIfIsset($data, 'licensePlate'),
+        'bay' => getIfIsset($data, 'bay'),
+        'serviceTimeSec' => getIfIsset($data, 'serviceTimeSec'),
+        'eventType' => getIfIsset($data, 'eventType'),
+        'receivedDate' =>  time() // Generate current timestamp
+    ];
 
     // Insert into BigQuery
     return insertIntoBigQuery($bigquery_data);
@@ -85,9 +111,9 @@ function getIfIsset($array, $keys)
  */
 function insertIntoBigQuery($data)
 {
-    $projectId = ''; // Your Google Cloud Project ID
-    $datasetId = ''; // Your BigQuery Dataset ID
-    $tableId = ''; // Your BigQuery Table ID
+    $projectId = 'clientdata-lofxpress'; // Your Google Cloud Project ID
+    $datasetId = 'lof_xpress'; // Your BigQuery Dataset ID
+    $tableId = 'webhook_data'; // Your BigQuery Table ID
 
     try {
         $bigQuery = new BigQueryClient(['projectId' => $projectId]);
@@ -99,10 +125,26 @@ function insertIntoBigQuery($data)
         if ($insertResponse->isSuccessful()) {
             http_response_code(200);
             return json_encode(["success" => "Data inserted into BigQuery"]);
-        } else {
+        }else {
+            // Get detailed error info from BigQuery response
+            $errors = $insertResponse->failedRows();
+            $errorDetails = [];
+            foreach ($errors as $rowError) {
+                $rowIndex = $rowError['rowIndex'] ?? 'unknown';
+                $rowErrors = $rowError['errors'] ?? [];
+                foreach ($rowErrors as $err) {
+                    $errorDetails[] = [
+                        'row' => $rowIndex,
+                        'reason' => $err['reason'] ?? 'unknown',
+                        'message' => $err['message'] ?? 'No message provided'
+                    ];
+                }
+            }
+            
+            $errorMessage = "Failed to insert data into BigQuery: " . json_encode($errorDetails);
             http_response_code(500);
-            error_log("Failed to insert data: " . $data);
-            return json_encode(["error" => "Failed to insert data "]);
+            error_log($errorMessage . " | Data: " . json_encode($data));
+            return json_encode(["error" => $errorMessage]);
         }
     } catch (Exception $e) {
         http_response_code(500);
