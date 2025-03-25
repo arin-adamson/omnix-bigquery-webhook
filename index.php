@@ -96,7 +96,7 @@ function getIfIsset($array, $keys)
  */
 function insertIntoBigQuery($data)
 {
-    $projectId = 'clientdata-lofxpress'; // Your Google Cloud Project ID
+    $projectId = 'omnix-data'; // Your Google Cloud Project ID
     $datasetId = 'lof_xpress'; // Your BigQuery Dataset ID
     $tableId = 'webhook_data'; // Your BigQuery Table ID
 
