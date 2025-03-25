@@ -38,23 +38,8 @@ FunctionsFramework::http('omnixBigQueryWebhook', function (ServerRequestInterfac
         return json_encode(["error" => "Request with unauthorized or missing token"]);
     }
 
-    // Get raw POST data and headers
+    // Get raw POST data
     $input = (string) $request->getBody();
-    $headers = $request->getHeaders();
-
-    // Extract client IP from X-Forwarded-For header
-    $clientIp = isset($headers['X-Forwarded-For'][0]) ? explode(',', $headers['X-Forwarded-For'][0])[0] : null;
-    if (!$clientIp) {
-        // Fallback to remote address if header is missing (less reliable in serverless)
-        $clientIp = $request->getServerParams()['REMOTE_ADDR'] ?? 'unknown';
-    }
-
-    // Check if the client IP matches the allowed IP
-    if ($clientIp !== $allowedIp) {
-        http_response_code(403);
-        error_log("Unauthorized IP: " . $clientIp);
-        return json_encode(["error" => "Request from unauthorized IP: " . $clientIp]);
-    }
 
     // Decode the JSON request body
     $data = json_decode($input, true);
