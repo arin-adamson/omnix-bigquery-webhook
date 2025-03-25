@@ -51,11 +51,11 @@ FunctionsFramework::http('omnixBigQueryWebhook', function (ServerRequestInterfac
 
     // Prepare data for BigQuery
     $bigquery_data = [
+        'ssid' => getIfIsset($data, 'ssid'),
         'oxLocationId' => getIfIsset($data, 'oxLocationId'),
         'date' => getIfIsset($data, 'date'),
         'licensePlate' => getIfIsset($data, 'licensePlate'),
         'bay' => getIfIsset($data, 'bay'),
-        'serviceTimeSec' => getIfIsset($data, 'serviceTimeSec'),
         'eventType' => getIfIsset($data, 'eventType'),
         'receivedDate' =>  time() // Generate current timestamp
     ];
