@@ -1,0 +1,1 @@
+web: vendor/bin/functions-framework --target=omnixBigQueryWebhook
