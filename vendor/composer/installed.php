@@ -1,9 +1,9 @@
 <?php return array(
     'root' => array(
-        'name' => 'yourname/zoho-bigquery',
+        'name' => 'yourname/bigquery-webhook',
         'pretty_version' => 'dev-master',
         'version' => 'dev-master',
-        'reference' => '89fcd4412f428dae3c3844df225dd5fde5972086',
+        'reference' => '4504f0ffb39dacff35e928902f8932a6c883dc48',
         'type' => 'library',
         'install_path' => __DIR__ . '/../../',
         'aliases' => array(),
@@ -337,10 +337,10 @@
             'aliases' => array(),
             'dev_requirement' => false,
         ),
-        'yourname/zoho-bigquery' => array(
+        'yourname/bigquery-webhook' => array(
             'pretty_version' => 'dev-master',
             'version' => 'dev-master',
-            'reference' => '89fcd4412f428dae3c3844df225dd5fde5972086',
+            'reference' => '4504f0ffb39dacff35e928902f8932a6c883dc48',
             'type' => 'library',
             'install_path' => __DIR__ . '/../../',
             'aliases' => array(),
