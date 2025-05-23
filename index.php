@@ -7,7 +7,7 @@ use Google\Cloud\BigQuery\BigQueryClient;
 use Psr\Http\Message\ServerRequestInterface;
 
 /**
- * Register the Cloud Function for handling Zoho Webhooks
+ * Register the Cloud Function for handling BigQuery Webhooks
  */
 FunctionsFramework::http('omnixBigQueryWebhook', function (ServerRequestInterface $request) { // Function name must match the function name in the Cloud Function
     // Load allowed token from environment variable
@@ -98,39 +98,46 @@ function insertIntoBigQuery($data)
 {
     $projectId = 'omnix-data'; // Your Google Cloud Project ID
     $datasetId = 'lof_xpress'; // Your BigQuery Dataset ID
-    $tableId = 'webhook_data'; // Your BigQuery Table ID
+
+    $tables = [
+        'webhook_data',
+        'webhook_data_partitioned' // <-- New partitioned table
+    ];
 
     try {
         $bigQuery = new BigQueryClient(['projectId' => $projectId]);
-        $dataset = $bigQuery->dataset($datasetId);
-        $table = $dataset->table($tableId);
 
-        $insertResponse = $table->insertRows([['data' => $data]]);
+        foreach ($tables as $tableId) {
+            $dataset = $bigQuery->dataset($datasetId);
+            $table = $dataset->table($tableId);
 
-        if ($insertResponse->isSuccessful()) {
-            http_response_code(200);
-            return json_encode(["success" => "Data inserted into BigQuery"]);
-        }else {
-            // Get detailed error info from BigQuery response
-            $errors = $insertResponse->failedRows();
-            $errorDetails = [];
-            foreach ($errors as $rowError) {
-                $rowIndex = $rowError['rowIndex'] ?? 'unknown';
-                $rowErrors = $rowError['errors'] ?? [];
-                foreach ($rowErrors as $err) {
-                    $errorDetails[] = [
-                        'row' => $rowIndex,
-                        'reason' => $err['reason'] ?? 'unknown',
-                        'message' => $err['message'] ?? 'No message provided'
-                    ];
+            $insertResponse = $table->insertRows([['data' => $data]]);
+
+            if (!$insertResponse->isSuccessful()) {
+                // Get detailed error info from BigQuery response
+                $errors = $insertResponse->failedRows();
+                $errorDetails = [];
+                foreach ($errors as $rowError) {
+                    $rowIndex = $rowError['rowIndex'] ?? 'unknown';
+                    $rowErrors = $rowError['errors'] ?? [];
+                    foreach ($rowErrors as $err) {
+                        $errorDetails[] = [
+                            'table' => $tableId,
+                            'row' => $rowIndex,
+                            'reason' => $err['reason'] ?? 'unknown',
+                            'message' => $err['message'] ?? 'No message provided'
+                        ];
+                    }
                 }
+                
+                $errorMessage = "Failed to insert data into BigQuery: " . json_encode($errorDetails);
+                http_response_code(500);
+                error_log($errorMessage . " | Data: " . json_encode($data));
+                return json_encode(["error" => $errorMessage]);
             }
-            
-            $errorMessage = "Failed to insert data into BigQuery: " . json_encode($errorDetails);
-            http_response_code(500);
-            error_log($errorMessage . " | Data: " . json_encode($data));
-            return json_encode(["error" => $errorMessage]);
         }
+        http_response_code(200);
+        return json_encode(["success" => "Data inserted into BigQuery"]);
     } catch (Exception $e) {
         http_response_code(500);
         error_log("Exception: " . $e->getMessage());
